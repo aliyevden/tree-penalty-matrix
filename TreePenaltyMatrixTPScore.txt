@@ -1,0 +1,33 @@
+BLOCK 1: Computing tree penalty matrix
+
+penaltymatrix <-function(d,method){ # d is a “dist” type object
+                  #method= linkage, tree type
+  Tree1 <- hclust(d,method=method)   # hierarchical tree, method=linkage type
+  n <- length(Tree1$height)+1
+  a1<-matrix(cutree(Tree1,1:n),ncol=n,nrow=n,byrow=F,dimnames=NULL) # matrix of cluster membership at  different heights
+  h1 <- rev(Tree1$height)# vector of heights  in decreasing order of length n-1
+  PM <-matrix(rep(0,n^2),nrow=n)   # initialize penalty matrix
+  for (i in 1:(n-1)) {
+    for(j in (i+1):n) {
+      e11 <- c(a1[i,])     # vector of cluster indices for point i
+      e12 <- c(a1[j,])     # vector of cluster indices for point j
+      lca1 <-max(which(e11==e12))  # least common ancestor node of i and j
+      v1 <- a1[,lca1]               # cluster indices at lca_th cut
+      et1 <- length(which(v1==e11[lca1]))  # number of points at the lca subtree
+      v2 <- a1[,lca1+1]   # cluster indices at lca+1_st cut
+      et2 <- length(which(v2==e11[lca1+1])) # number of elements in the same cluster as point i at lca+1_st node
+       PM[i,j] <- h1[lca1]
+      PM[j,i] <- PM[i,j]
+    }
+  }
+  return(PM)
+}
+
+# BLOCK 2:  Computing tree penalty score of a path
+ppathScore <- function(path,PM){ #input path, and Penalty matrix
+  score <- 0
+  for (i in 1:(length(path)-1)){
+    score <- score+PM[path[i],path[i+1]]
+  }
+  return(score)
+}
